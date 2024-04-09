@@ -1,0 +1,26 @@
+syntax = "proto3";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/Alieksieiev0/feed-service/api/proto";
+
+service AuthService {
+    rpc ReadClaims(Token) returns (UserClaims);
+}
+
+message Token {
+    string value = 1;
+}
+
+message UserClaims {
+    string user_id = 1;
+    string username = 2;
+    string email = 3;
+    string algorithm = 4;
+    string issuer = 5;
+    string subject = 6;
+    repeated string audience = 7;
+    google.protobuf.Timestamp expires_at = 8;
+    google.protobuf.Timestamp not_before = 9;
+    google.protobuf.Timestamp issued_at = 10;
+    string id = 11;
+}
