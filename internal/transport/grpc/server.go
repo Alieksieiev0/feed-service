@@ -2,7 +2,6 @@ package grpc
 
 import (
 	"context"
-	"fmt"
 	"net"
 
 	"github.com/Alieksieiev0/feed-service/api/proto"
@@ -12,16 +11,19 @@ import (
 )
 
 type GRPCServer struct {
+	addr string
 }
 
-func NewServer() *GRPCServer {
-	return &GRPCServer{}
+func NewServer(addr string) *GRPCServer {
+	return &GRPCServer{
+		addr: addr,
+	}
 }
 
-func (us *GRPCServer) Start(addr string, service services.UserService) error {
+func (s *GRPCServer) Start(service services.UserService) error {
 	grpcUserService := NewGRPCUserServiceServer(service)
 
-	ln, err := net.Listen("tcp", addr)
+	ln, err := net.Listen("tcp", s.addr)
 	if err != nil {
 		return err
 	}
@@ -48,7 +50,6 @@ func (us *GRPCUserServiceServer) GetByUsername(
 	ctx context.Context,
 	req *proto.UsernameRequest,
 ) (*proto.UserResponse, error) {
-	fmt.Println("----GET-----")
 	user, err := us.service.GetByUsername(ctx, req.Username)
 	if err != nil {
 		return nil, err
@@ -67,7 +68,6 @@ func (us *GRPCUserServiceServer) Save(
 	ctx context.Context,
 	req *proto.UserRequest,
 ) (*proto.SaveResponse, error) {
-	fmt.Println("---------")
 	user := &models.User{
 		Username: req.Username,
 		Password: req.Password,

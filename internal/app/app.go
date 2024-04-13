@@ -47,9 +47,9 @@ func Run() {
 
 	serv := services.NewUserFeedService(db)
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(*grpcServerAddr)
 	g.Go(func() error {
-		return grpcServer.Start(*grpcServerAddr, serv)
+		return grpcServer.Start(serv)
 	})
 
 	restServer := rest.NewServer(app, *restServerAddr)
