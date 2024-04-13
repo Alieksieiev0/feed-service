@@ -27,14 +27,16 @@ func (b *Base) BeforeCreate(tx *gorm.DB) error {
 
 type User struct {
 	Base
-	Name       string `gorm:"not null; default:null; unique"`
+	Username   string `gorm:"default:null;not null;unique;"`
+	Password   string `gorm:"default:null;not null;"`
+	Email      string `gorm:"default:null;not null;unique;"`
 	Subcribers []User `gorm:"many2many:user_subcribers"`
 	Posts      []Post
 }
 
 type Post struct {
 	Base
-	Title  string `gorm:"not null; default:null;"`
-	Body   string `gorm:"not null; default:null;"`
-	UserId string `gorm:"not null; default:null;"`
+	Title  string `json:"title"   gorm:"not null; default:null;"`
+	Body   string `json:"body"    gorm:"not null; default:null;"`
+	UserId string `json:"user_id" gorm:"not null; default:null;"`
 }

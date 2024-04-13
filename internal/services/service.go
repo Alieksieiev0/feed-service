@@ -1,11 +1,9 @@
 package services
 
 import (
-	"context"
+	"fmt"
 
-	"github.com/Alieksieiev0/feed-service/internal/models"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 type UserFeedService interface {
@@ -13,14 +11,9 @@ type UserFeedService interface {
 	FeedService
 }
 
-type UserService interface {
-	Get(ctx context.Context, id string) (*models.User, error)
-	Save(ctx context.Context, user *models.User) error
-}
-
-type FeedService interface {
-	Subscribe(ctx context.Context, user *models.User, sub *models.User) error
-	Post(ctx context.Context, user *models.User, post *models.Post) error
+type userFeedService struct {
+	userService
+	feedService
 }
 
 func NewUserFeedService(db *gorm.DB) UserFeedService {
@@ -30,44 +23,29 @@ func NewUserFeedService(db *gorm.DB) UserFeedService {
 	}
 }
 
-type userFeedService struct {
-	userService
-	feedService
-}
+type Param func(db *gorm.DB) *gorm.DB
 
-func NewUserService(db *gorm.DB) UserService {
-	return &userService{
-		db: db,
+func Limit(limit int) Param {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Limit(limit)
 	}
 }
 
-type userService struct {
-	db *gorm.DB
-}
-
-func (us *userService) Get(ctx context.Context, id string) (*models.User, error) {
-	user := &models.User{}
-	return user, us.db.Preload(clause.Associations).First(user, id).Error
-}
-
-func (us *userService) Save(ctx context.Context, user *models.User) error {
-	return us.db.Save(user).Error
-}
-
-func NewFeedService(db *gorm.DB) FeedService {
-	return &feedService{
-		db: db,
+func Offset(offset int) Param {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Offset(offset)
 	}
 }
 
-type feedService struct {
-	db *gorm.DB
+func Order(column string, order string) Param {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Order(fmt.Sprintf("%s  %s", column, order))
+	}
 }
 
-func (fs *feedService) Subscribe(ctx context.Context, user *models.User, sub *models.User) error {
-	return fs.db.Model(user).Association("subscribers").Append(sub)
-}
-
-func (fs *feedService) Post(ctx context.Context, user *models.User, post *models.Post) error {
-	return fs.db.Model(user).Association("posts").Append(post)
+func ApplyParams(db *gorm.DB, params ...Param) *gorm.DB {
+	for _, param := range params {
+		db = param(db)
+	}
+	return db
 }

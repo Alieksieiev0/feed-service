@@ -1,7 +1,7 @@
 package rest
 
 import (
-	"net/http"
+	"strconv"
 
 	"github.com/Alieksieiev0/feed-service/internal/models"
 	"github.com/Alieksieiev0/feed-service/internal/services"
@@ -10,24 +10,57 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+func GetPosts(serv services.FeedService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+
+		limit, err := strconv.Atoi(c.Params("limit", "10"))
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).
+				JSON(fiber.Map{"error": "invalid limit was provided"})
+		}
+
+		offset, err := strconv.Atoi(c.Params("offset", "0"))
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).
+				JSON(fiber.Map{"error": "invalid offset was provided"})
+		}
+
+		sortBy := c.Params("sortBy", "Id")
+		orderBy := c.Params("orderBy", "asc")
+
+		posts, err := serv.GetPosts(
+			c.Context(),
+			services.Limit(limit),
+			services.Offset(offset),
+			services.Order(sortBy, orderBy),
+		)
+
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{"posts": posts})
+	}
+}
+
 func Subscribe(serv services.UserFeedService, producer kafka.Producer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		sub := &models.User{}
 		if err := c.BodyParser(sub); err != nil {
-			return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		}
 
 		userId := c.Params("id")
-		user, err := serv.Get(c.Context(), userId)
+		user, err := serv.GetById(c.Context(), userId)
 		if err != nil {
-			return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		}
 
 		if err = serv.Subscribe(c.Context(), user, sub); err != nil {
 			return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{"error": err.Error()})
 		}
 
-		err = producer.Produce([]models.User{*user}, kafka.NewSubscription(sub.ID, sub.Name))
+		err = producer.Produce([]models.User{*user}, kafka.NewSubscription(sub.ID, sub.Username))
 		if err != nil {
 			body := types.SubscriptionPartialSuccess{
 				Subscription: types.XMLResponse{
@@ -42,7 +75,7 @@ func Subscribe(serv services.UserFeedService, producer kafka.Producer) fiber.Han
 			return c.Status(fiber.StatusMultiStatus).XML(body)
 		}
 
-		c.Status(http.StatusOK)
+		c.Status(fiber.StatusOK)
 		return nil
 	}
 }
@@ -55,16 +88,16 @@ func Post(serv services.UserFeedService, producer kafka.Producer) fiber.Handler 
 		}
 
 		userId := c.Params("id")
-		user, err := serv.Get(c.Context(), userId)
+		user, err := serv.GetById(c.Context(), userId)
 		if err != nil {
-			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 		}
 
 		if err = serv.Post(c.Context(), user, post); err != nil {
 			return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{"error": err.Error()})
 		}
 
-		err = producer.Produce(user.Subcribers, kafka.NewPost(user.ID, user.Name, post.ID))
+		err = producer.Produce(user.Subcribers, kafka.NewPost(user.ID, user.Username, post.ID))
 		if err != nil {
 			body := types.PostPartialSuccess{
 				Creation: types.XMLResponse{
@@ -79,7 +112,6 @@ func Post(serv services.UserFeedService, producer kafka.Producer) fiber.Handler 
 			return c.Status(fiber.StatusMultiStatus).XML(body)
 		}
 
-		c.Status(http.StatusCreated)
-		return nil
+		return c.Status(fiber.StatusCreated).JSON(post)
 	}
 }

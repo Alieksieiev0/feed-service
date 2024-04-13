@@ -8,28 +8,29 @@ import (
 )
 
 type RESTServer struct {
-	app *fiber.App
+	app  *fiber.App
+	addr string
 }
 
-func NewServer(app *fiber.App) *RESTServer {
+func NewServer(app *fiber.App, addr string) *RESTServer {
 	return &RESTServer{
-		app: app,
+		app:  app,
+		addr: addr,
 	}
 }
 
 func (us *RESTServer) Start(
-	addr string,
 	serv services.UserFeedService,
 	client proto.AuthServiceClient,
 	producer kafka.Producer,
 ) error {
 	us.app.Use(
 		NewAuthMiddleware(AuthConfig{Client: client}),
-		NewUserMiddleware(UserConfig{Serv: serv}),
 	)
 
+	us.app.Get("/posts", GetPosts(serv))
 	us.app.Put("/users/:id/subscribers", Subscribe(serv, producer))
 	us.app.Put("/users/:id/posts", Post(serv, producer))
 
-	return us.app.Listen(addr)
+	return us.app.Listen(us.addr)
 }

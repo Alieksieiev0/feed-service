@@ -5,7 +5,8 @@ services:
       - feed-db
       - kafka
     ports:
-      - "3002:3002"
+      - "3000:3000"
+      - "4000:4000"
     volumes:
       - ./:/app
   feed-db:
