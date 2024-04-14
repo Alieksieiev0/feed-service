@@ -43,6 +43,18 @@ func Order(column string, order string) Param {
 	}
 }
 
+func Filter(name string, value string, isStrict bool) Param {
+	return func(db *gorm.DB) *gorm.DB {
+		if isStrict {
+			return db.Where(name+"= ?", value)
+		}
+		return db.Where(
+			fmt.Sprintf("LOWER(%s) LIKE LOWER(?)", name),
+			fmt.Sprintf("%%%s%%", value),
+		)
+	}
+}
+
 func ApplyParams(db *gorm.DB, params ...Param) *gorm.DB {
 	for _, param := range params {
 		db = param(db)

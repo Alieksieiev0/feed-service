@@ -35,6 +35,9 @@ func GetUsers(serv services.UserService) fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		}
 
+		username := c.Query("username")
+		params = append(params, services.Filter("username", username, false))
+
 		users, err := serv.GetUsers(c.Context(), params...)
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
