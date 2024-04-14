@@ -26,6 +26,7 @@ func (us *RESTServer) Start(
 ) error {
 
 	us.app.Get("/posts", GetPosts(serv))
+	us.app.Get("/users", GetUsers(serv))
 	us.app.Use(
 		NewAuthMiddleware(AuthConfig{Client: client}),
 	)
