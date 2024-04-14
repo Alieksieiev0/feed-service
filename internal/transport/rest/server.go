@@ -24,11 +24,11 @@ func (us *RESTServer) Start(
 	client proto.AuthServiceClient,
 	producer kafka.Producer,
 ) error {
+
+	us.app.Get("/posts", GetPosts(serv))
 	us.app.Use(
 		NewAuthMiddleware(AuthConfig{Client: client}),
 	)
-
-	us.app.Get("/posts", GetPosts(serv))
 	us.app.Put("/users/:id/subscribers", Subscribe(serv, producer))
 	us.app.Put("/users/:id/posts", Post(serv, producer))
 

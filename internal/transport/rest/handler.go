@@ -13,34 +13,38 @@ import (
 
 func GetPosts(serv services.FeedService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		limit, err := strconv.Atoi(c.Query("limit", "10"))
+		params, err := getDefaultParams(c)
 		if err != nil {
-			return c.Status(fiber.StatusBadRequest).
-				JSON(fiber.Map{"error": "invalid limit was provided"})
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		}
 
-		offset, err := strconv.Atoi(c.Query("offset", "0"))
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).
-				JSON(fiber.Map{"error": "invalid offset was provided"})
-		}
-
-		sortBy := c.Query("sort_by", "Id")
-		orderBy := c.Query("order_by", "asc")
-		fmt.Println(sortBy)
-
-		posts, err := serv.GetPosts(
-			c.Context(),
-			services.Limit(limit),
-			services.Offset(offset),
-			services.Order(sortBy, orderBy),
-		)
+		posts, err := serv.GetPosts(c.Context(), params...)
 
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		}
 
 		return c.Status(fiber.StatusOK).JSON(posts)
+	}
+}
+
+func GetUsers(serv services.UserService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		params, err := getDefaultParams(c)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		}
+
+		users, err := serv.GetUsers(c.Context(), params...)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		}
+
+		for _, u := range users {
+			u.Password = ""
+		}
+
+		return c.Status(fiber.StatusOK).JSON(users)
 	}
 }
 
@@ -57,11 +61,14 @@ func Subscribe(serv services.UserFeedService, producer kafka.Producer) fiber.Han
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		}
 
-		if err = serv.Subscribe(c.Context(), user, sub); err != nil {
+		if err = serv.Subscribe(c.Context(), user.Id, sub.ID); err != nil {
 			return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{"error": err.Error()})
 		}
 
-		err = producer.Produce([]models.User{*user}, kafka.NewSubscription(sub.ID, sub.Username))
+		err = producer.Produce(
+			[]types.UserBase{user.UserBase},
+			kafka.NewSubscription(sub.ID, sub.Username),
+		)
 		if err != nil {
 			body := types.SubscriptionPartialSuccess{
 				Subscription: types.XMLResponse{
@@ -94,11 +101,11 @@ func Post(serv services.UserFeedService, producer kafka.Producer) fiber.Handler 
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 		}
 
-		if err = serv.Post(c.Context(), user, post); err != nil {
+		if err = serv.Post(c.Context(), user.Id, post); err != nil {
 			return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{"error": err.Error()})
 		}
 
-		err = producer.Produce(user.Subcribers, kafka.NewPost(user.ID, user.Username, post.ID))
+		err = producer.Produce(user.Subcribers, kafka.NewPost(user.Id, user.Username, post.ID))
 		if err != nil {
 			body := types.PostPartialSuccess{
 				Creation: types.XMLResponse{
@@ -115,4 +122,26 @@ func Post(serv services.UserFeedService, producer kafka.Producer) fiber.Handler 
 
 		return c.Status(fiber.StatusCreated).JSON(post)
 	}
+}
+
+func getDefaultParams(c *fiber.Ctx) ([]services.Param, error) {
+	limit, err := strconv.Atoi(c.Query("limit", "10"))
+	if err != nil {
+		return nil, fmt.Errorf("invalid limit was provided")
+	}
+
+	offset, err := strconv.Atoi(c.Query("offset", "0"))
+	if err != nil {
+		return nil, fmt.Errorf("invalid offset was provided")
+	}
+
+	sortBy := c.Query("sort_by", "Id")
+	orderBy := c.Query("order_by", "asc")
+
+	params := []services.Param{
+		services.Limit(limit),
+		services.Offset(offset),
+		services.Order(sortBy, orderBy),
+	}
+	return params, nil
 }

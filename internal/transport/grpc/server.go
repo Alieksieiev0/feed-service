@@ -47,16 +47,16 @@ func NewGRPCUserServiceServer(service services.UserService) proto.UserServiceSer
 }
 
 func (us *GRPCUserServiceServer) GetByUsername(
-	ctx context.Context,
+	c context.Context,
 	req *proto.UsernameRequest,
 ) (*proto.UserResponse, error) {
-	user, err := us.service.GetByUsername(ctx, req.Username)
+	user, err := us.service.GetByUsername(c, req.Username)
 	if err != nil {
 		return nil, err
 	}
 
 	resp := &proto.UserResponse{
-		Id:       user.ID,
+		Id:       user.Id,
 		Username: user.Username,
 		Password: user.Password,
 		Email:    user.Email,
@@ -65,7 +65,7 @@ func (us *GRPCUserServiceServer) GetByUsername(
 }
 
 func (us *GRPCUserServiceServer) Save(
-	ctx context.Context,
+	c context.Context,
 	req *proto.UserRequest,
 ) (*proto.SaveResponse, error) {
 	user := &models.User{
@@ -73,7 +73,7 @@ func (us *GRPCUserServiceServer) Save(
 		Password: req.Password,
 		Email:    req.Email,
 	}
-	err := us.service.Save(ctx, user)
+	err := us.service.Save(c, user)
 	if err != nil {
 		return nil, err
 	}

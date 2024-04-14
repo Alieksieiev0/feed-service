@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/Alieksieiev0/feed-service/internal/models"
+	"github.com/Alieksieiev0/feed-service/internal/types"
 	"github.com/segmentio/kafka-go"
 )
 
 type Producer interface {
-	Produce(receivers []models.User, notif Notification) error
+	Produce(receivers []types.UserBase, notif Notification) error
 }
 
 type producer struct {
@@ -22,7 +22,7 @@ func NewProducer(addr string) Producer {
 	}
 }
 
-func (p *producer) Produce(receivers []models.User, notif Notification) error {
+func (p *producer) Produce(receivers []types.UserBase, notif Notification) error {
 	w := &kafka.Writer{
 		Addr:                   kafka.TCP(p.addr),
 		Topic:                  notif.Topic(),
@@ -37,7 +37,7 @@ func (p *producer) Produce(receivers []models.User, notif Notification) error {
 	messages := []kafka.Message{}
 	for _, r := range receivers {
 		message := kafka.Message{
-			Key:   []byte(r.ID),
+			Key:   []byte(r.Id),
 			Value: value,
 		}
 
