@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/Alieksieiev0/feed-service/internal/models"
@@ -12,21 +13,21 @@ import (
 
 func GetPosts(serv services.FeedService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-
-		limit, err := strconv.Atoi(c.Params("limit", "10"))
+		limit, err := strconv.Atoi(c.Query("limit", "10"))
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).
 				JSON(fiber.Map{"error": "invalid limit was provided"})
 		}
 
-		offset, err := strconv.Atoi(c.Params("offset", "0"))
+		offset, err := strconv.Atoi(c.Query("offset", "0"))
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).
 				JSON(fiber.Map{"error": "invalid offset was provided"})
 		}
 
-		sortBy := c.Params("sortBy", "Id")
-		orderBy := c.Params("orderBy", "asc")
+		sortBy := c.Query("sort_by", "Id")
+		orderBy := c.Query("order_by", "asc")
+		fmt.Println(sortBy)
 
 		posts, err := serv.GetPosts(
 			c.Context(),
@@ -39,7 +40,7 @@ func GetPosts(serv services.FeedService) fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		}
 
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{"posts": posts})
+		return c.Status(fiber.StatusOK).JSON(posts)
 	}
 }
 

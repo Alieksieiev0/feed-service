@@ -15,7 +15,7 @@ func NewAuthMiddleware(cfg AuthConfig) fiber.Handler {
 			Value: c.Get("Authorization"),
 		}
 		if token.Value == "" {
-			return c.Status(fiber.StatusBadRequest).
+			return c.Status(fiber.StatusUnauthorized).
 				JSON(fiber.Map{"error": "No authorization code"})
 		}
 
