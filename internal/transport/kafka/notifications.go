@@ -2,59 +2,42 @@ package kafka
 
 const (
 	subscriptionTopic = "subscriptions"
+	subscriptionType  = "subscription"
 	postTopic         = "posts"
+	postType          = "post"
 )
 
 type Notification interface {
 	Topic() string
 }
 
-type Base struct {
+type notification struct {
 	FromId   string
 	FromName string
+	TargetId string
+	Type     string
 	topic    string
 }
 
-func (bn *Base) Topic() string {
-	return bn.topic
+func (n *notification) Topic() string {
+	return n.topic
 }
 
-func NewPost(fromId, fromName, postId string, topic ...string) *Post {
-	t := postTopic
-	if len(topic) > 0 {
-		t = topic[0]
-	}
-
-	return &Post{
-		Base: Base{
-			FromId:   fromId,
-			FromName: fromName,
-			topic:    t,
-		},
-		PostId: postId,
+func NewPostNotification(ownerId, ownerName, postId string) Notification {
+	return &notification{
+		FromId:   ownerId,
+		FromName: ownerName,
+		TargetId: postId,
+		Type:     postType,
+		topic:    postTopic,
 	}
 }
 
-type Post struct {
-	Base
-	PostId string
-}
-
-func NewSubscription(fromId, fromName string, topic ...string) *Subscription {
-	t := subscriptionTopic
-	if len(topic) > 0 {
-		t = topic[0]
+func NewSubscriptionNotification(userId, userName string) Notification {
+	return &notification{
+		FromId:   userId,
+		FromName: userName,
+		Type:     subscriptionType,
+		topic:    postTopic,
 	}
-
-	return &Subscription{
-		Base: Base{
-			FromId:   fromId,
-			FromName: fromName,
-			topic:    t,
-		},
-	}
-}
-
-type Subscription struct {
-	Base
 }

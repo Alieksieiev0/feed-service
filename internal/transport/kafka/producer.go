@@ -9,7 +9,7 @@ import (
 )
 
 type Producer interface {
-	Produce(receivers []types.UserBase, notif Notification) error
+	Produce(receivers []types.UserBase, notification Notification) error
 }
 
 type producer struct {
@@ -22,14 +22,14 @@ func NewProducer(addr string) Producer {
 	}
 }
 
-func (p *producer) Produce(receivers []types.UserBase, notif Notification) error {
+func (p *producer) Produce(receivers []types.UserBase, notification Notification) error {
 	w := &kafka.Writer{
 		Addr:                   kafka.TCP(p.addr),
-		Topic:                  notif.Topic(),
+		Topic:                  notification.Topic(),
 		AllowAutoTopicCreation: true,
 	}
 
-	value, err := json.Marshal(notif)
+	value, err := json.Marshal(notification)
 	if err != nil {
 		return err
 	}
