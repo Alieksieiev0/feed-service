@@ -39,7 +39,7 @@ type UserBase struct {
 
 type User struct {
 	UserBase
-	Password   string     `json:"password"`
-	Subcribers []UserBase `json:"subcribers"`
-	Posts      []Post     `json:"posts"`
+	Password    string     `json:"password"`
+	Subscribers []UserBase `json:"subcribers"`
+	Posts       []Post     `json:"posts"`
 }

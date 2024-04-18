@@ -66,9 +66,9 @@ func (us *userService) mapUsers(users []models.User) []types.User {
 				Username: u.Username,
 				Email:    u.Email,
 			},
-			Password:   u.Password,
-			Subcribers: us.mapSubscribers(&u),
-			Posts:      us.mapPosts(&u),
+			Password:    u.Password,
+			Subscribers: us.mapSubscribers(&u),
+			Posts:       us.mapPosts(&u),
 		}
 		mus = append(mus, mu)
 	}
@@ -78,7 +78,7 @@ func (us *userService) mapUsers(users []models.User) []types.User {
 
 func (us *userService) mapSubscribers(u *models.User) []types.UserBase {
 	mss := []types.UserBase{}
-	for _, s := range u.Subcribers {
+	for _, s := range u.Subscribers {
 		ms := types.UserBase{
 			Id:       s.ID,
 			Username: s.Username,

@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Alieksieiev0/feed-service/internal/models"
 	"github.com/Alieksieiev0/feed-service/internal/types"
@@ -45,6 +46,8 @@ func (fs *feedService) Subscribe(c context.Context, id string, subId string) err
 	if err := fs.db.First(u, "id = ?", subId).Error; err != nil {
 		return err
 	}
+	fmt.Printf("%+v\n", u)
+	fmt.Println(id)
 
 	return fs.db.Model(&models.User{Base: models.Base{ID: id}}).
 		Association("Subscribers").

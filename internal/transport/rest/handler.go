@@ -72,6 +72,8 @@ func Subscribe(serv services.UserFeedService, producer kafka.Producer) fiber.Han
 			[]types.UserBase{user.UserBase},
 			kafka.NewSubscription(sub.ID, sub.Username),
 		)
+		fmt.Println("-----")
+		fmt.Println(err)
 		if err != nil {
 			body := types.SubscriptionPartialSuccess{
 				Subscription: types.XMLResponse{
@@ -108,7 +110,7 @@ func Post(serv services.UserFeedService, producer kafka.Producer) fiber.Handler 
 			return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{"error": err.Error()})
 		}
 
-		err = producer.Produce(user.Subcribers, kafka.NewPost(user.Id, user.Username, post.ID))
+		err = producer.Produce(user.Subscribers, kafka.NewPost(user.Id, user.Username, post.ID))
 		if err != nil {
 			body := types.PostPartialSuccess{
 				Creation: types.XMLResponse{

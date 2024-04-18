@@ -23,7 +23,7 @@ func Run() {
 			"auth-service:4001",
 			"listen address of grpc client",
 		)
-		kafkaAddr = flag.String("kafka", "9092", "address of kafka")
+		kafkaAddr = flag.String("kafka", "kafka:9092", "address of kafka")
 		producer  = kafka.NewProducer(*kafkaAddr)
 		app       = fiber.New()
 		g         = new(errgroup.Group)
