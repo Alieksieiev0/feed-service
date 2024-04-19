@@ -26,9 +26,5 @@ func Connect() (*gorm.DB, error) {
 }
 
 func Setup(db *gorm.DB) error {
-	if err := db.Exec("CREATE EXTENSION IF NOT EXISTS pg_trgm").Error; err != nil {
-		return err
-	}
-
 	return db.AutoMigrate(&models.User{}, &models.Post{})
 }

@@ -7,10 +7,6 @@ import (
 	"gorm.io/gorm"
 )
 
-type Entity interface {
-	BeforeCreate(tx *gorm.DB) error
-}
-
 type Base struct {
 	ID        string         `gorm:"type:uuid" json:"id"`
 	CreatedAt time.Time      `                 json:"created_at"`

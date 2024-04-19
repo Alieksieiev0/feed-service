@@ -16,7 +16,7 @@ const (
 )
 
 type Producer interface {
-	Produce(receivers []types.UserBase, notification Notification) error
+	Produce(receivers []types.UserBase, message Message) error
 }
 
 type producer struct {
@@ -29,14 +29,14 @@ func NewProducer(addr string) Producer {
 	}
 }
 
-func (p *producer) Produce(receivers []types.UserBase, notification Notification) error {
+func (p *producer) Produce(receivers []types.UserBase, message Message) error {
 	w := &kafka.Writer{
 		Addr:                   kafka.TCP(p.addr),
-		Topic:                  notification.Topic(),
+		Topic:                  message.Topic(),
 		AllowAutoTopicCreation: true,
 	}
 
-	value, err := json.Marshal(notification)
+	value, err := json.Marshal(message)
 	if err != nil {
 		return err
 	}
@@ -58,11 +58,11 @@ func (p *producer) Produce(receivers []types.UserBase, notification Notification
 	return w.Close()
 }
 
-type Notification interface {
+type Message interface {
 	Topic() string
 }
 
-type notification struct {
+type message struct {
 	FromId   string
 	FromName string
 	TargetId string
@@ -70,12 +70,12 @@ type notification struct {
 	topic    string
 }
 
-func (n *notification) Topic() string {
+func (n *message) Topic() string {
 	return n.topic
 }
 
-func NewPostNotification(ownerId, ownerName, postId string) Notification {
-	return &notification{
+func NewPostMessage(ownerId, ownerName, postId string) Message {
+	return &message{
 		FromId:   ownerId,
 		FromName: ownerName,
 		TargetId: postId,
@@ -84,8 +84,8 @@ func NewPostNotification(ownerId, ownerName, postId string) Notification {
 	}
 }
 
-func NewSubscriptionNotification(userId, userName string) Notification {
-	return &notification{
+func NewSubscriptionMessage(userId, userName string) Message {
+	return &message{
 		FromId:   userId,
 		FromName: userName,
 		Type:     subscriptionType,
