@@ -3,6 +3,7 @@ package kafka
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/Alieksieiev0/feed-service/internal/types"
 	"github.com/segmentio/kafka-go"
@@ -36,6 +37,7 @@ func (p *producer) Produce(receivers []types.UserBase, message Message) error {
 		AllowAutoTopicCreation: true,
 	}
 
+	fmt.Printf("%+v\n", message)
 	value, err := json.Marshal(message)
 	if err != nil {
 		return err
@@ -63,11 +65,11 @@ type Message interface {
 }
 
 type message struct {
-	FromId   string
-	FromName string
-	TargetId string
-	Type     string
-	topic    string
+	FromId   string `json:"from_id"`
+	FromName string `json:"from_name"`
+	TargetId string `json:"target_id"`
+	Type     string `json:"type"`
+	topic    string `json:"topic"`
 }
 
 func (n *message) Topic() string {
