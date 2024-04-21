@@ -69,7 +69,7 @@ type message struct {
 	FromName string `json:"from_name"`
 	TargetId string `json:"target_id"`
 	Type     string `json:"type"`
-	topic    string `json:"topic"`
+	topic    string
 }
 
 func (n *message) Topic() string {
