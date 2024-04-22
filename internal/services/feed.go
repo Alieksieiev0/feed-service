@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/Alieksieiev0/feed-service/internal/models"
@@ -13,6 +14,7 @@ import (
 type FeedService interface {
 	GetPosts(c context.Context, params ...Param) ([]types.Post, error)
 	Subscribe(c context.Context, id string, subId string) error
+	Unsubscribe(c context.Context, id string, subId string) error
 	Post(c context.Context, id string, post *models.Post) error
 }
 
@@ -42,20 +44,46 @@ func (fs *feedService) GetPosts(c context.Context, params ...Param) ([]types.Pos
 }
 
 func (fs *feedService) Subscribe(c context.Context, id string, subId string) error {
-	u := &models.User{}
-	if err := fs.db.First(u, "id = ?", subId).Error; err != nil {
+	if err := fs.userExists(&models.User{}, id); err != nil {
 		return err
 	}
-	fmt.Printf("%+v\n", u)
-	fmt.Println(id)
+	u := &models.User{}
+	if err := fs.userExists(u, id); err != nil {
+		return err
+	}
 
 	return fs.db.Model(&models.User{Base: models.Base{ID: id}}).
 		Association("Subscribers").
 		Append(u)
 }
 
+func (fs *feedService) Unsubscribe(c context.Context, id string, subId string) error {
+	if err := fs.userExists(&models.User{}, id); err != nil {
+		return err
+	}
+	u := &models.User{}
+	if err := fs.userExists(u, id); err != nil {
+		return err
+	}
+
+	return fs.db.Model(&models.User{Base: models.Base{ID: id}}).
+		Association("Subscribers").
+		Delete(u)
+}
+
 func (fs *feedService) Post(c context.Context, id string, post *models.Post) error {
 	return fs.db.Model(&models.User{Base: models.Base{ID: id}}).Association("Posts").Append(post)
+}
+
+func (fs *feedService) userExists(user *models.User, id string) error {
+	err := fs.db.First(user, "id = ?", id).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return fmt.Errorf("user with provided id does not exist")
+		}
+		return err
+	}
+	return nil
 }
 
 func (fs *feedService) mapToOwners(posts []models.Post) map[string][]models.Post {
