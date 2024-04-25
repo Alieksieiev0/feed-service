@@ -15,7 +15,7 @@ type FeedService interface {
 	GetPosts(c context.Context, params ...Param) ([]types.Post, error)
 	Subscribe(c context.Context, id string, subId string) error
 	Unsubscribe(c context.Context, id string, subId string) error
-	Post(c context.Context, id string, post *models.Post) error
+	Post(c context.Context, id string, post *models.Post) (*types.Post, error)
 }
 
 func NewFeedService(db *gorm.DB) FeedService {
@@ -36,7 +36,7 @@ func (fs *feedService) GetPosts(c context.Context, params ...Param) ([]types.Pos
 
 	usersPosts := fs.mapToOwners(posts)
 	users := []models.User{}
-	if err := fs.db.Find(&users, "Id IN ?", maps.Keys(usersPosts)).Error; err != nil {
+	if err := fs.db.Find(&users, "id IN ?", maps.Keys(usersPosts)).Error; err != nil {
 		return nil, err
 	}
 
@@ -48,7 +48,7 @@ func (fs *feedService) Subscribe(c context.Context, id string, subId string) err
 		return err
 	}
 	u := &models.User{}
-	if err := fs.userExists(u, id); err != nil {
+	if err := fs.userExists(u, subId); err != nil {
 		return err
 	}
 
@@ -62,7 +62,7 @@ func (fs *feedService) Unsubscribe(c context.Context, id string, subId string) e
 		return err
 	}
 	u := &models.User{}
-	if err := fs.userExists(u, id); err != nil {
+	if err := fs.userExists(u, subId); err != nil {
 		return err
 	}
 
@@ -71,8 +71,26 @@ func (fs *feedService) Unsubscribe(c context.Context, id string, subId string) e
 		Delete(u)
 }
 
-func (fs *feedService) Post(c context.Context, id string, post *models.Post) error {
-	return fs.db.Model(&models.User{Base: models.Base{ID: id}}).Association("Posts").Append(post)
+func (fs *feedService) Post(c context.Context, id string, post *models.Post) (*types.Post, error) {
+	err := fs.db.Model(&models.User{Base: models.Base{ID: id}}).Association("Posts").Append(post)
+	if err != nil {
+		return nil, err
+	}
+	user := &models.User{}
+	if err := fs.db.Find(user, "id = ?", id).Error; err != nil {
+		return nil, err
+	}
+
+	p := &types.Post{
+		Id:        post.ID,
+		CreatedAt: post.CreatedAt,
+		Title:     post.Title,
+		Body:      post.Body,
+		OwnerName: user.Username,
+		OwnerId:   user.ID,
+	}
+
+	return p, nil
 }
 
 func (fs *feedService) userExists(user *models.User, id string) error {

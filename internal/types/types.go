@@ -40,6 +40,6 @@ type UserBase struct {
 type User struct {
 	UserBase
 	Password    string     `json:"password"`
-	Subscribers []UserBase `json:"subcribers"`
+	Subscribers []UserBase `json:"subscribers"`
 	Posts       []Post     `json:"posts"`
 }
