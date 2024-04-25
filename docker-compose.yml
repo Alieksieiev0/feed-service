@@ -14,14 +14,14 @@ services:
     volumes:
       - feed-data:/var/lib/postgresql
     ports:
-      - "${DB_PORT}:${DB_PORT}"
+      - "${FEED_DB_PORT}:${FEED_DB_PORT}"
     environment:
-      - POSTGRES_HOST=${DB_HOST}
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - POSTGRES_PORT=${DB_PORT}
-      - POSTGRES_DB=${DB_NAME}
-    command: -p ${DB_PORT}
+      - POSTGRES_HOST=${FEED_DB_HOST}
+      - POSTGRES_USER=${FEED_DB_USER}
+      - POSTGRES_PASSWORD=${FEED_DB_PASSWORD}
+      - POSTGRES_PORT=${FEED_DB_PORT}
+      - POSTGRES_DB=${FEED_DB_NAME}
+    command: -p ${FEED_DB_PORT}
   kafka:
     image: docker.io/bitnami/kafka
     ports:

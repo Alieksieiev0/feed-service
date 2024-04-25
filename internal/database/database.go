@@ -13,11 +13,11 @@ import (
 func Connect() (*gorm.DB, error) {
 	dsn := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s",
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_NAME"),
-		os.Getenv("DB_PORT"),
+		os.Getenv("FEED_DB_HOST"),
+		os.Getenv("FEED_DB_USER"),
+		os.Getenv("FEED_DB_PASSWORD"),
+		os.Getenv("FEED_DB_NAME"),
+		os.Getenv("FEED_DB_PORT"),
 	)
 
 	return gorm.Open(postgres.Open(dsn), &gorm.Config{
