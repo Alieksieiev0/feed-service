@@ -37,11 +37,13 @@ func (p *producer) Produce(receivers []types.UserBase, message Message) error {
 		AllowAutoTopicCreation: true,
 	}
 
-	fmt.Printf("%+v\n", message)
 	value, err := json.Marshal(message)
 	if err != nil {
 		return err
 	}
+	fmt.Println("---")
+	fmt.Printf("receiver: %+v\n ", receivers[0])
+	fmt.Printf("msg: %+v \n", message)
 
 	messages := []kafka.Message{}
 	for _, r := range receivers {
