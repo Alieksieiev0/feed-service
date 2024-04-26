@@ -27,13 +27,11 @@ func (us *RESTServer) Start(
 
 	us.app.Get("/posts", GetPosts(serv))
 	us.app.Get("/users", GetUsers(serv))
-	us.app.Get("/users/:id", GetUserById(serv))
 	us.app.Use(
 		NewAuthMiddleware(AuthConfig{Client: client}),
 	)
 	us.app.Put("/users/:id/subscribers", Subscribe(serv, producer))
 	us.app.Put("/users/:id/posts", Post(serv, producer))
-	us.app.Delete("/users/:id/subscribers", Unsubscribe(serv))
 
 	return us.app.Listen(us.addr)
 }

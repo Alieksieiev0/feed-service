@@ -19,10 +19,6 @@ func GetPosts(serv services.FeedService) fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		}
 
-		if userId := c.Query("user_id"); userId != "" {
-			params = append(params, services.Filter("user_id", userId, true))
-		}
-
 		posts, err := serv.GetPosts(c.Context(), params...)
 
 		if err != nil {
@@ -49,27 +45,15 @@ func GetUsers(serv services.UserService) fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		}
 
-		for i := range users {
-			users[i].Password = ""
+		for _, u := range users {
+			u.Password = ""
 		}
 
 		return c.Status(fiber.StatusOK).JSON(users)
 	}
 }
 
-func GetUserById(serv services.UserService) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		user, err := serv.GetById(c.Context(), c.Params("id"))
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
-		}
-		fmt.Println(user)
-
-		return c.Status(fiber.StatusOK).JSON(user)
-	}
-}
-
-func Subscribe(serv services.UserFeedService, producer kafka.Producer) fiber.Handler {
+func Subscribe(serv services.FeedService, producer kafka.Producer) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		sub := &models.User{}
 		if err := c.BodyParser(sub); err != nil {
@@ -82,18 +66,9 @@ func Subscribe(serv services.UserFeedService, producer kafka.Producer) fiber.Han
 		}
 
 		go func() {
-			s, err := serv.GetById(c.Context(), sub.ID)
-			if err != nil {
-				log.Println(err)
-				return
-			}
-			fmt.Println("^^^^^^")
-			fmt.Println(sub.ID)
-			fmt.Println(userId)
-
-			err = producer.Produce(
+			err := producer.Produce(
 				[]types.UserBase{{Id: userId}},
-				kafka.NewSubscriptionMessage(s.Id, s.Username),
+				kafka.NewSubscriptionMessage(sub.ID, sub.Username),
 			)
 			if err != nil {
 				log.Println(err)
@@ -133,22 +108,21 @@ func Post(serv services.UserFeedService, producer kafka.Producer) fiber.Handler 
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 		}
 
-		p, err := serv.Post(c.Context(), user.Id, post)
-		if err != nil {
+		if err = serv.Post(c.Context(), user.Id, post); err != nil {
 			return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{"error": err.Error()})
 		}
 
 		go func() {
 			err := producer.Produce(
 				user.Subscribers,
-				kafka.NewPostMessage(user.Id, user.Username, p.Id),
+				kafka.NewPostMessage(user.Id, user.Username, post.ID),
 			)
 			if err != nil {
 				log.Println(err)
 			}
 		}()
 
-		return c.Status(fiber.StatusCreated).JSON(p)
+		return c.Status(fiber.StatusCreated).JSON(post)
 	}
 }
 
