@@ -1,14 +1,13 @@
 services:
   feed-service:
-    build: .
+    build: 
+      dockerfile: "Dockerfile.production"
     depends_on:
       - feed-db
       - kafka
     ports:
       - "3000:3000"
       - "4000:4000"
-    volumes:
-      - ./:/app
   feed-db:
     image: postgres
     volumes:
@@ -42,5 +41,6 @@ services:
       - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
 
 volumes:
+  feed-service-data:
   feed-data:
   kafka_data:
